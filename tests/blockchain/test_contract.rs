@@ -67,6 +67,57 @@ async fn test_initialize_ai_agent() {
 
     #
     use anchor_lang::prelude::*;
+
+declare_id!("PRAGNA1111111111111111111111111111111111");
+
+#[program]
+pub mod pragna {
+    use super::*;
+
+    pub fn record_event(ctx: Context<RecordEvent>, delta: f64) -> Result<()> {
+        let state = &mut ctx.accounts.state;
+        state.current_delta = delta;
+
+        // Calculate deviation from equilibrium
+        let deviation = (state.current_delta - state.ideal_state).abs();
+
+        // If deviation exceeds threshold, trigger correction
+        if deviation > 0.05 {
+            let correction = generate_feedback(deviation);
+            state.apply_correction(correction);
+        }
+
+        // Log state memory
+        state.memory.push(state.current_delta);
+        Ok(())
+    }
+}
+
+// Core logic
+
+fn generate_feedback(deviation: f64) -> f64 {
+    // Simple proportional feedback for demonstration
+    let feedback_strength = 0.8;
+    deviation * -feedback_strength
+}
+
+#[account]
+pub struct State {
+    pub ideal_state: f64,
+    pub current_delta: f64,
+    pub memory: Vec<f64>,
+}
+
+impl State {
+    pub fn apply_correction(&mut self, correction: f64) {
+        self.current_delta += correction;
+        msg!("Correction applied: {}", correction);
+    }
+}
+)}
+
+    #
+    use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Mint, Transfer};
 
 declare_id!("Run0mE1111111111111111111111111111111111111");
